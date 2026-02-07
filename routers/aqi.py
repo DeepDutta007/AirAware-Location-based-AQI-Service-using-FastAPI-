@@ -78,32 +78,28 @@ async def get_aqi(
     # Get real client IP (proxy-safe)
         forwarded = request.headers.get("x-forwarded-for")
 
-    if forwarded:
-        client_ip = forwarded.split(",")[0]
-    else:
-        client_ip = request.client.host
+        if forwarded:
+            client_ip = forwarded.split(",")[0]
+        else:
+            client_ip = request.client.host
 
-    print("Detected Client IP:", client_ip)
+        print("Detected Client IP:", client_ip)
 
-    # Optional localhost fallback (ONLY for local testing)
-    if client_ip == "127.0.0.1":
-        client_ip = "8.8.8.8"
+        location = await get_location_from_ip(client_ip)
 
-    location = await get_location_from_ip(client_ip)
+        if "error" in location:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not determine location"
+            )
 
-    if "error" in location:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not determine location"
+        aqi_data = await fetch_aqi(
+            location["latitude"],
+            location["longitude"]
         )
 
-    aqi_data = await fetch_aqi(
-        location["latitude"],
-        location["longitude"]
-    )
 
-
-    return {
+        return {
             "ip": client_ip,
             "location": location,
             "aqi": aqi_data["aqi"],
