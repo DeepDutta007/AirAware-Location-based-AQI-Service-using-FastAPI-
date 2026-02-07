@@ -75,22 +75,33 @@ async def get_aqi(
 
     # ✅ Priority 3 — AUTO IP
     else:
+    # Get real client IP (proxy-safe)
+        forwarded = request.headers.get("x-forwarded-for")
+
+    if forwarded:
+        client_ip = forwarded.split(",")[0]
+    else:
         client_ip = request.client.host
 
-        # Localhost fix
-        if client_ip == "127.0.0.1":
-            # fallback test IP (Google DNS)
-            client_ip = "8.8.8.8"
+    print("Detected Client IP:", client_ip)
 
-        location = await get_location_from_ip(client_ip)
+    # Optional localhost fallback (ONLY for local testing)
+    if client_ip == "127.0.0.1":
+        client_ip = "8.8.8.8"
 
-        if "error" in location:
-            raise HTTPException(status_code=400, detail="Could not determine location")
+    location = await get_location_from_ip(client_ip)
 
-        aqi_data = await fetch_aqi(
-            location["latitude"],
-            location["longitude"]
+    if "error" in location:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not determine location"
         )
+
+    aqi_data = await fetch_aqi(
+        location["latitude"],
+        location["longitude"]
+    )
+
 
     return {
             "ip": client_ip,
