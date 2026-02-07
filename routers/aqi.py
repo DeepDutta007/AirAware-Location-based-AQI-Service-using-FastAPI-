@@ -7,6 +7,13 @@ from services.geo_service import get_location_from_city, reverse_geocode
 
 router = APIRouter()
 
+@router.get("/debug-ip")
+async def debug_ip(request: Request):
+    return {
+        "detected_ip": request.headers.get("x-forwarded-for"),
+        "client_host": request.client.host
+    }
+
 @router.get("/aqi", response_model=AQIResponse)
 async def get_aqi(
     request: Request,
