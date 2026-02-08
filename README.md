@@ -49,3 +49,6 @@ I have implemented by api_cache = TTLCache(maxsize=100, ttl=600), which will hav
 
 ## Handling of private/local IP addresses
 I have added it like this, where if a user with a private/local IP addresses try to access it, they will be notified that their Private IP addresses cannot be geolocated.
+
+## Retry and timeout configuration
+Have used python library tenacity, so that the function to get data executes 3 times at max with a delay of 2s between them if it reaches an exception for getting the output.
