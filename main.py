@@ -8,6 +8,12 @@ from services import http_client
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import time
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 app = FastAPI()
 

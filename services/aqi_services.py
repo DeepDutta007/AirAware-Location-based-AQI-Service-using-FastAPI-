@@ -3,10 +3,14 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_fixed
 from services import http_client
 from functools import lru_cache
+from cachetools import TTLCache
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = os.getenv("AQI_BASE_URL")
 
-aqi_cache = {}
+aqi_cache = TTLCache(maxsize=100, ttl=600)
 
 @lru_cache(maxsize=128)
 def cache_key(lat: float, lon: float):
@@ -29,7 +33,8 @@ async def fetch_aqi(lat: float, lon: float):
     )
 
     try:
-        print("Calling AQI provider...")
+        logger.info("Calling AQI provider...")
+
         response = await http_client.async_client.get(url, timeout=10)
 
         response.raise_for_status()  # catches bad HTTP responses
@@ -51,9 +56,11 @@ async def fetch_aqi(lat: float, lon: float):
         return result
 
     except httpx.RequestError:
+       logger.error(f"AQI request failed: {e}")
        return {"error": "Unable to reach AQI service"}
 
     except KeyError:
+        logger.error("Unexpected response from AQI provider")
         return {"error": "Unexpected response from AQI provider"}
     
 

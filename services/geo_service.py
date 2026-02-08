@@ -1,8 +1,9 @@
-import os
+import os, logging, httpx
 from services import http_client
 
 GEO_BASE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
+logger = logging.getLogger(__name__)
 
 async def get_location_from_city(city: str):
 
@@ -59,9 +60,8 @@ async def reverse_geocode(lat: float, lon: float):
             "longitude": lon
         }
 
-    except Exception as e:
-
-        print("Reverse geocode failed:", str(e))
+    except httpx.HTTPError as e:
+        logger.error(f"Reverse geocode failed: {e}")
 
         return {
             "city": "Unresolved",
