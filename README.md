@@ -21,12 +21,26 @@ Designed and implemented a production ready FastAPI backend that determines a cl
 
 ## Tech used/Libraries
 
+# Backend
 - FastAPI
-- Python
-- HTTPX (async HTTP client)
+- Uvicorn
+- HTTPX
 - Pydantic
-- Open-Meteo API (For getting the details using IP)
-- OpenStreetMap (For getting the details using city)
+- Python-dotenv
+- Tenacity (retry logic)
+- Logging
+
+# Frontend
+
+- React
+- Vite
+
+# Externl APIs
+External APIs
+
+- Open-Meteo — Air Quality + Forward Geocoding
+- BigDataCloud — Reverse Geocoding
+- IPWhois — IP-based location
 
 ## Architecture
 
@@ -38,6 +52,47 @@ models/ → Pydantic schemas
 middleware → Request logging  
 
 This separation ensures scalability, maintainability, and clean dependency boundaries.
+
+## Local Setup
+# Clone Repository
+git clone https://github.com/DeepDutta007/AirAware-Location-based-AQI-Service-using-FastAPI-
+cd YOUR_REPO
+
+# Backend Setup
+
+Create virtual environment:
+python -m venv venv
+
+Activate:
+Windows
+venv\Scripts\activate
+
+Mac/Linux
+source venv/bin/activate
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+# Run Backend
+uvicorn main:app --reload
+Visit:
+http://127.0.0.1:8000/docs
+
+# Frontend Setup
+cd AQI_frontend
+npm install
+npm run dev
+
+# API Usage
+Get AQI Automatically (IP)
+GET /aqi
+
+Get AQI by City
+GET /aqi?city=Chennai
+
+Get AQI by Coordinates
+GET /aqi?lat=40&lon=-74
 
 ## Why ipwho.is and Open-Meteo were selected
 Ipwho.is (often referred to as IP Geolocation API - IPWHOIS.io) is a real-time IP geolocation API service that provides fast, accurate, and multilingual data for IPv4 and IPv6 addresses. It is used by developers and companies to determine the country, region, city, ISP, and location of an IP address, with IP Geolocation API - IPWHOIS.io featuring a self-learning neural network for updates. 
