@@ -115,6 +115,7 @@ function App() {
         {/* LOCATION BUTTON */}
         <button
           onClick={fetchByIP}
+          disabled={loading}
           style={{
             padding: "12px 26px",
             borderRadius: "10px",
