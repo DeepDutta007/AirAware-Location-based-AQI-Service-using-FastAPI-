@@ -76,12 +76,29 @@ async def get_aqi(
     # ✅ Priority 3 — AUTO IP
     else:
     # Get real client IP (proxy-safe)
-        forwarded = request.headers.get("x-forwarded-for")
+        forwarded = (
+            request.headers.get("x-forwarded-for")
+            or request.headers.get("x-real-ip")
+        )
 
-        if forwarded:
-            client_ip = forwarded.split(",")[0]
-        else:
-            client_ip = request.client.host
+        client_ip = (
+            forwarded.split(",")[0].strip()
+            if forwarded
+            else request.client.host
+        )
+
+
+        if not client_ip:
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to determine client IP"
+            )
+
+        if client_ip.startswith(("127.", "10.", "192.168.")):
+            raise HTTPException(
+                status_code=400,
+                detail="Private IP addresses cannot be geolocated"
+            )
 
         location = await get_location_from_ip(client_ip)
 

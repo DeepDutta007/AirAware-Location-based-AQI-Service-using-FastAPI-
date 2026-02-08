@@ -6,9 +6,7 @@ from fastapi import FastAPI, Request
 from routers.aqi import router as aqi_router
 from services import http_client
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
-import time
-import logging
+import httpx, time,logging
 
 logging.basicConfig(
     level=logging.INFO,

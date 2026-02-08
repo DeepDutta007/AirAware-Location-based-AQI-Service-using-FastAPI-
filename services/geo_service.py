@@ -70,5 +70,3 @@ async def reverse_geocode(lat: float, lon: float):
             "latitude": lat,
             "longitude": lon
         }
-
-
