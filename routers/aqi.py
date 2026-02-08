@@ -83,12 +83,7 @@ async def get_aqi(
         else:
             client_ip = request.client.host
 
-        print("Detected Client IP:", client_ip)
-
         location = await get_location_from_ip(client_ip)
-
-        print("Detected Client IP:", client_ip)
-        print("LOCATION FROM IP:", location)
 
         if "error" in location:
             raise HTTPException(

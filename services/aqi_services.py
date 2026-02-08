@@ -19,10 +19,10 @@ def cache_key(lat: float, lon: float):
 
 async def fetch_aqi(lat: float, lon: float):
 
-    #key = cache_key(lat, lon)
+    key = cache_key(lat, lon)
 
-    #if key in aqi_cache:
-    #            return aqi_cache[key]
+    if key in aqi_cache:
+                return aqi_cache[key]
 
     url = (
        f"{BASE_URL}?latitude={lat}&longitude={lon}&current=us_aqi"
@@ -47,7 +47,7 @@ async def fetch_aqi(lat: float, lon: float):
              },
         "source": "Open-Meteo"
         }
-        #aqi_cache[key] = result
+        aqi_cache[key] = result
         return result
 
     except httpx.RequestError:

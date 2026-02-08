@@ -9,7 +9,7 @@ async def get_location_from_ip(ip: str):
 
     response = await http_client.async_client.get(url, timeout=10)
     data = response.json()
-
+    
     # ipwho returns a success flag
     if not data.get("success", False):
         return {"error": "Invalid IP address"}
