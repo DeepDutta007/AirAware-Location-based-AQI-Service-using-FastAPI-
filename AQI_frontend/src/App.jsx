@@ -4,25 +4,25 @@ function App() {
 
   const [city, setCity] = useState("");
   const [data, setData] = useState(null);
+  const [showJSON, setShowJSON] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const BASE_URL = "https://airaware-location-based-aqi-service.onrender.com";
 
 
-  // ✅ AQI Color Helper
   const getAQIColor = (value) => {
-    if (value <= 50) return "#2ecc71";     // green
-    if (value <= 100) return "#f39c12";    // orange
-    if (value <= 150) return "#e74c3c";    // red
-    return "#8e44ad";                      // purple
+    if (!value) return "#ffffff";
+    if (value <= 50) return "#2ecc71";
+    if (value <= 100) return "#f39c12";
+    if (value <= 150) return "#e74c3c";
+    return "#8e44ad";
   };
 
 
-  // ✅ Fetch By City
   const fetchByCity = async () => {
 
-    if (!city) return;
+    if (!city.trim()) return;
 
     setLoading(true);
     setError("");
@@ -34,180 +34,235 @@ function App() {
         `${BASE_URL}/aqi?city=${encodeURIComponent(city)}`
       );
 
-      if (!response.ok) {
-        throw new Error("City not found");
-      }
+      if (!response.ok) throw new Error();
 
       const result = await response.json();
       setData(result);
 
     } catch {
       setError("Failed to fetch AQI data");
-
     } finally {
       setLoading(false);
     }
   };
 
-
-  // ✅ Fetch Using GPS (with IP fallback)
-  const fetchByLocation = () => {
-
-    if (!navigator.geolocation) {
-      setError("Geolocation not supported");
-      return;
-    }
+    const fetchByIP = async () => {
 
     setLoading(true);
     setError("");
     setData(null);
 
-    navigator.geolocation.getCurrentPosition(
+    try {
 
-      async (position) => {
-        try {
+      const response = await fetch(`${BASE_URL}/aqi`);
 
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
+      if (!response.ok) {
+        throw new Error();
+    }
 
-          const response = await fetch(
-            `${BASE_URL}/aqi?lat=${lat}&lon=${lon}`
-          );
+    const result = await response.json();
+    setData(result);
 
-          const result = await response.json();
-          setData(result);
-
-        } catch {
-          setError("Failed to fetch AQI data");
-        } finally {
-          setLoading(false);
-        }
-      },
-
-      // 👉 If GPS denied → fallback to IP
-      async () => {
-        try {
-
-          const response = await fetch(`${BASE_URL}/aqi`);
-          const result = await response.json();
-          setData(result);
-
-        } catch {
-          setError("Failed to fetch AQI data");
-        } finally {
-          setLoading(false);
-        }
-      }
-    );
-  };
+  } catch {
+      setError("Failed to detect location");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
-  // ✅ AUTO LOAD ON START (Huge UX upgrade)
   useEffect(() => {
-    fetchByLocation();
+    fetchByIP();
   }, []);
+
 
 
   return (
 
     <div
       style={{
-        padding: "40px",
-        fontFamily: "Arial",
-        maxWidth: "600px",
-        margin: "auto",
-        textAlign: "center"
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #0f172a, #020617)",
+        fontFamily: "Arial"
       }}
     >
 
-      <h1>🌍 AirAware</h1>
-
-
-      {/* GPS Button */}
-      <button
-        onClick={fetchByLocation}
+      {/* MAIN CARD */}
+      <div
         style={{
-          padding: "10px 20px",
-          marginBottom: "20px",
-          cursor: "pointer"
+          width: "90%",
+          maxWidth: "520px",
+          padding: "50px",
+          borderRadius: "18px",
+          background: "#111827",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+          textAlign: "center"
         }}
       >
-        Use My Location
-      </button>
 
+        <h1 style={{ color: "white", fontSize: "34px" }}>
+          🌍 AirAware
+        </h1>
 
-      {/* City Search */}
-      <div>
-        <input
-          placeholder="Enter city..."
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && fetchByCity()}
-          style={{
-            padding: "10px",
-            width: "65%",
-            marginRight: "10px"
-          }}
-        />
-
-        <button
-          onClick={fetchByCity}
-          style={{
-            padding: "10px 15px",
-            cursor: "pointer"
-          }}
-        >
-          Check City AQI
-        </button>
-      </div>
-
-
-      {/* Loading */}
-      {loading && <p style={{ marginTop: "20px" }}>Loading...</p>}
-
-
-      {/* Error */}
-      {error && (
-        <p style={{ color: "red", marginTop: "20px" }}>
-          {error}
+        <p style={{ color: "#9ca3af", marginBottom: "30px" }}>
+          Real-time Air Quality Index
         </p>
-      )}
 
 
-      {/* RESULT CARD */}
-      {data && (
-
-        <div
+        {/* LOCATION BUTTON */}
+        <button
+          onClick={fetchByIP}
           style={{
-            marginTop: "30px",
-            padding: "25px",
-            borderRadius: "12px",
-            boxShadow: "0px 4px 12px rgba(0,0,0,0.1)"
+            padding: "12px 26px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#2563eb",
+            color: "white",
+            cursor: "pointer",
+            marginBottom: "30px",
+            fontSize: "15px"
           }}
         >
+          Detect My AQI
+        </button>
 
-          <h2>
-            {data.location.city}, {data.location.country}
-          </h2>
 
-          <p
+
+        {/* CITY SEARCH */}
+        <div style={{ marginBottom: "20px" }}>
+
+          <input
+            placeholder="Enter city..."
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchByCity()}
             style={{
-              fontSize: "42px",
-              fontWeight: "bold",
-              color: getAQIColor(data.aqi.value),
-              margin: "10px 0"
+              padding: "12px",
+              width: "75%",
+              borderRadius: "10px",
+              border: "1px solid #374151",
+              background: "#020617",
+              color: "white",
+              marginBottom: "15px"
+            }}
+          />
+
+          <br />
+
+          <button
+            onClick={fetchByCity}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              border: "1px solid #2563eb",
+              background: "transparent",
+              color: "#2563eb",
+              cursor: "pointer"
             }}
           >
-            {data.aqi.value}
-          </p>
-
-          <p style={{ fontSize: "18px" }}>
-            {data.aqi.category}
-          </p>
+            Check City AQI
+          </button>
 
         </div>
-      )}
 
+
+
+        {/* JSON BUTTON */}
+        {data && (
+          <button
+            onClick={() => setShowJSON(!showJSON)}
+            style={{
+              marginTop: "10px",
+              padding: "6px 14px",
+              fontSize: "13px",
+              borderRadius: "8px",
+              border: "none",
+              background: "#374151",
+              color: "white",
+              cursor: "pointer"
+            }}
+          >
+            {showJSON ? "Hide Raw JSON" : "Show Raw JSON"}
+          </button>
+        )}
+
+
+
+        {loading && (
+          <p style={{ marginTop: "20px", color: "white" }}>
+            Loading...
+          </p>
+        )}
+
+        {error && (
+          <p style={{ color: "#ef4444", marginTop: "20px" }}>
+            {error}
+          </p>
+        )}
+
+
+
+        {/* RESULT */}
+        {data && (
+
+          <div
+            style={{
+              marginTop: "30px",
+              padding: "30px",
+              borderRadius: "16px",
+              background: getAQIColor(data.aqi?.value) + "22",
+              border: `1px solid ${getAQIColor(data.aqi?.value)}`,
+              color: "white"
+            }}
+          >
+
+            <h2>
+              {data.location?.city}, {data.location?.country}
+            </h2>
+
+            <p
+              style={{
+                fontSize: "56px",
+                fontWeight: "bold",
+                color: getAQIColor(data.aqi?.value),
+                margin: "10px 0"
+              }}
+            >
+              {data.aqi?.value}
+            </p>
+
+            <p style={{ fontSize: "18px" }}>
+              {data.aqi?.category}
+            </p>
+
+          </div>
+        )}
+
+
+
+        {/* RAW JSON VIEWER */}
+        {showJSON && data && (
+
+          <pre
+            style={{
+              marginTop: "20px",
+              textAlign: "left",
+              background: "#020617",
+              padding: "15px",
+              borderRadius: "10px",
+              overflowX: "auto",
+              color: "#22c55e",
+              fontSize: "13px"
+            }}
+          >
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        )}
+
+      </div>
     </div>
   );
 }
