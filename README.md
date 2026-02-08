@@ -56,7 +56,7 @@ This separation ensures scalability, maintainability, and clean dependency bound
 ## Local Setup
 # Clone Repository
 git clone https://github.com/DeepDutta007/AirAware-Location-based-AQI-Service-using-FastAPI-
-cd YOUR_REPO
+cd AirAware-Location-based-AQI-Service-using-FastAPI-
 
 # Backend Setup
 
