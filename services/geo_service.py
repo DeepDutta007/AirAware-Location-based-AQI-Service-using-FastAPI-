@@ -9,23 +9,32 @@ async def get_location_from_city(city: str):
 
     url = f"{GEO_BASE_URL}?name={city}&count=1"
 
-    response = await http_client.async_client.get(url, timeout=10)
-    response.raise_for_status()
+    try:
+        response = await http_client.async_client.get(url, timeout=10)
+        response.raise_for_status()
 
-    data = response.json()
+        data = response.json()
 
-    if not data.get("results"):
-        return {"error": "City not found"}
+        if not data.get("results"):
+            return {"error": "City not found"}
 
-    result = data["results"][0]
+        result = data["results"][0]
 
-    return {
-        "city": result["name"],
-        "region": result.get("admin1", "Unknown"),
-        "country": result["country"],
-        "latitude": result["latitude"],
-        "longitude": result["longitude"]
-    }
+        return {
+            "city": result["name"],
+            "region": result.get("admin1", "Unknown"),
+            "country": result["country"],
+            "latitude": result["latitude"],
+            "longitude": result["longitude"]
+        }
+
+    except httpx.TimeoutException:
+        logger.error("Forward geocode timeout")
+        return {"error": "Geolocation service timed out"}
+
+    except httpx.HTTPError as e:
+        logger.error(f"Forward geocode failed: {e}")
+        return {"error": "Geolocation service unavailable"}
 
 async def reverse_geocode(lat: float, lon: float):
 
