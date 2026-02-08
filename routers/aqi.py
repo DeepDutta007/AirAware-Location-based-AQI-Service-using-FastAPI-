@@ -53,7 +53,7 @@ async def get_aqi(
             "ip": None,
             "location": location,
             "aqi": aqi_data["aqi"],
-            "source": aqi_data["source"]
+            "source": "BigDataCloud"
         }
 
     elif ip:
