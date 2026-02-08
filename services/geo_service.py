@@ -28,45 +28,40 @@ async def get_location_from_city(city: str):
 
 async def reverse_geocode(lat: float, lon: float):
 
-    url = "https://nominatim.openstreetmap.org/reverse"
+    url = "https://api.bigdatacloud.net/data/reverse-geocode-client"
 
     params = {
-        "lat": lat,
-        "lon": lon,
-        "format": "json"
-    }
-
-    headers = {
-        "User-Agent": "aqi-app"   # REQUIRED by Nominatim
+        "latitude": lat,
+        "longitude": lon,
+        "localityLanguage": "en"
     }
 
     try:
+
         response = await http_client.async_client.get(
             url,
             params=params,
-            headers=headers,
             timeout=10
         )
 
         response.raise_for_status()
 
         data = response.json()
-        address = data.get("address", {})
 
         return {
-            "city": address.get("city")
-                    or address.get("town")
-                    or address.get("village")
+            "city": data.get("city")
+                    or data.get("locality")
                     or "Unresolved",
 
-            "region": address.get("state", "Unresolved"),
-            "country": address.get("country", "Unresolved"),
+            "region": data.get("principalSubdivision", "Unresolved"),
+            "country": data.get("countryName", "Unresolved"),
             "latitude": lat,
             "longitude": lon
         }
 
     except Exception as e:
-        print("Reverse geocode failed:", e)
+
+        print("Reverse geocode failed:", str(e))
 
         return {
             "city": "Unresolved",

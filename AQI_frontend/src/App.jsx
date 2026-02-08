@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
+
   const [city, setCity] = useState("");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -8,8 +9,19 @@ function App() {
 
   const BASE_URL = "https://airaware-location-based-aqi-service.onrender.com";
 
-  // ✅ Fetch using city
+
+  // ✅ AQI Color Helper
+  const getAQIColor = (value) => {
+    if (value <= 50) return "#2ecc71";     // green
+    if (value <= 100) return "#f39c12";    // orange
+    if (value <= 150) return "#e74c3c";    // red
+    return "#8e44ad";                      // purple
+  };
+
+
+  // ✅ Fetch By City
   const fetchByCity = async () => {
+
     if (!city) return;
 
     setLoading(true);
@@ -17,6 +29,7 @@ function App() {
     setData(null);
 
     try {
+
       const response = await fetch(
         `${BASE_URL}/aqi?city=${encodeURIComponent(city)}`
       );
@@ -27,71 +40,174 @@ function App() {
 
       const result = await response.json();
       setData(result);
-    } catch (err) {
-      setError("Failed to fetch AQI data");
-    }
 
-    setLoading(false);
+    } catch {
+      setError("Failed to fetch AQI data");
+
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ✅ Fetch using device IP
-  const fetchByIP = async () => {
+
+  // ✅ Fetch Using GPS (with IP fallback)
+  const fetchByLocation = () => {
+
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setData(null);
 
-    try {
-      const response = await fetch(`${BASE_URL}/aqi`);
+    navigator.geolocation.getCurrentPosition(
 
-      if (!response.ok) {
-        throw new Error("Could not detect location");
+      async (position) => {
+        try {
+
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          const response = await fetch(
+            `${BASE_URL}/aqi?lat=${lat}&lon=${lon}`
+          );
+
+          const result = await response.json();
+          setData(result);
+
+        } catch {
+          setError("Failed to fetch AQI data");
+        } finally {
+          setLoading(false);
+        }
+      },
+
+      // 👉 If GPS denied → fallback to IP
+      async () => {
+        try {
+
+          const response = await fetch(`${BASE_URL}/aqi`);
+          const result = await response.json();
+          setData(result);
+
+        } catch {
+          setError("Failed to fetch AQI data");
+        } finally {
+          setLoading(false);
+        }
       }
-
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError("Failed to fetch AQI data");
-    }
-
-    setLoading(false);
+    );
   };
 
-  return (
-    <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>🌍 AQI Checker</h1>
 
-      {/* Auto location */}
-      <button onClick={fetchByIP} style={{ marginBottom: "20px" }}>
+  // ✅ AUTO LOAD ON START (Huge UX upgrade)
+  useEffect(() => {
+    fetchByLocation();
+  }, []);
+
+
+  return (
+
+    <div
+      style={{
+        padding: "40px",
+        fontFamily: "Arial",
+        maxWidth: "600px",
+        margin: "auto",
+        textAlign: "center"
+      }}
+    >
+
+      <h1>🌍 AirAware</h1>
+
+
+      {/* GPS Button */}
+      <button
+        onClick={fetchByLocation}
+        style={{
+          padding: "10px 20px",
+          marginBottom: "20px",
+          cursor: "pointer"
+        }}
+      >
         Use My Location
       </button>
 
+
+      {/* City Search */}
       <div>
         <input
           placeholder="Enter city..."
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          style={{ padding: "8px", marginRight: "10px" }}
+          onKeyDown={(e) => e.key === "Enter" && fetchByCity()}
+          style={{
+            padding: "10px",
+            width: "65%",
+            marginRight: "10px"
+          }}
         />
 
-        <button onClick={fetchByCity}>
+        <button
+          onClick={fetchByCity}
+          style={{
+            padding: "10px 15px",
+            cursor: "pointer"
+          }}
+        >
           Check City AQI
         </button>
       </div>
 
+
       {/* Loading */}
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ marginTop: "20px" }}>Loading...</p>}
+
 
       {/* Error */}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "red", marginTop: "20px" }}>
+          {error}
+        </p>
+      )}
 
-      {/* Result */}
+
+      {/* RESULT CARD */}
       {data && (
-        <div style={{ marginTop: "20px" }}>
-          <h2>{data.location.city}</h2>
-          <p><strong>AQI:</strong> {data.aqi.value}</p>
-          <p><strong>Category:</strong> {data.aqi.category}</p>
+
+        <div
+          style={{
+            marginTop: "30px",
+            padding: "25px",
+            borderRadius: "12px",
+            boxShadow: "0px 4px 12px rgba(0,0,0,0.1)"
+          }}
+        >
+
+          <h2>
+            {data.location.city}, {data.location.country}
+          </h2>
+
+          <p
+            style={{
+              fontSize: "42px",
+              fontWeight: "bold",
+              color: getAQIColor(data.aqi.value),
+              margin: "10px 0"
+            }}
+          >
+            {data.aqi.value}
+          </p>
+
+          <p style={{ fontSize: "18px" }}>
+            {data.aqi.category}
+          </p>
+
         </div>
       )}
+
     </div>
   );
 }
